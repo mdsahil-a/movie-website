@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Movie Details — CineVault</title>
+  <meta name="description" content="Get full details and download links for your favorite movies on CineVault." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="loader"><div class="loader-spinner"></div></div>
+
+  <nav class="navbar">
+    <a href="../../index.html" class="logo">Cine<span>Vault</span></a>
+    <ul class="nav-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="../../index.html#trending">Trending</a></li>
+      <li><a href="../../index.html#new">New Releases</a></li>
+      <li><a href="../../index.html#genres">Genres</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="Search..." />
+      </div>
+      <div class="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+
+  <main id="detailsRoot">
+    <section class="details-hero">
+      <div class="details-bg"></div>
+      <div class="details-content">
+        <div class="details-poster"><img id="dPoster" src="" alt="Poster" /></div>
+        <div class="details-info">
+          <a href="../../index.html" class="back-link">← Back to home</a>
+          <h1 id="dTitle"></h1>
+          <div class="details-meta">
+            <span class="pill" id="dRating"></span>
+            <span class="pill" id="dYear"></span>
+            <span class="pill" id="dDuration"></span>
+            <span class="pill" id="dQuality"></span>
+          </div>
+          <div class="genre-tags" id="dGenres"></div>
+          <p class="details-desc" id="dDesc"></p>
+          <a id="dDownload" class="btn btn-primary" href="#">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span>Download Now</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header"><h2 class="section-title">Screenshots</h2></div>
+      <div class="gallery" id="dGallery"></div>
+    </section>
+
+    <section class="section">
+      <div class="section-header"><h2 class="section-title">More Like This</h2></div>
+      <div class="movie-grid" id="relatedGrid"></div>
+    </section>
+  </main>
+
+  <footer class="footer"><p>© 2025 CineVault</p></footer>
+  <script type="module" src="../js/script.js"></script>
+</body>
+</html>

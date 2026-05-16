@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Download — CineVault</title>
+  <meta name="description" content="Select quality and download movies instantly from CineVault." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/style.css" />
+</head>
+<body>
+  <div class="loader"><div class="loader-spinner"></div></div>
+
+  <nav class="navbar">
+    <a href="../../index.html" class="logo">Cine<span>Vault</span></a>
+    <ul class="nav-links">
+      <li><a href="../../index.html">Home</a></li>
+      <li><a href="../../index.html#trending">Trending</a></li>
+      <li><a href="../../index.html#new">New Releases</a></li>
+    </ul>
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="searchInput" type="text" placeholder="Search..." />
+      </div>
+      <div class="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+
+  <main id="downloadRoot" class="download-page">
+    <div class="download-card">
+      <a href="javascript:history.back()" class="back-link">← Back</a>
+      <div class="download-header">
+        <span class="small">Choose Quality</span>
+        <h1 id="downloadTitle">Movie Title</h1>
+        <p id="downloadYear">— • —</p>
+      </div>
+
+      <!-- 3 quality buttons in a single row (Populated by JS) -->
+      <div class="quality-row"></div>
+
+      <p class="download-note">
+        Select your preferred quality. Higher quality means larger file size and better viewing experience.<br>
+        All downloads are secured and verified.
+      </p>
+    </div>
+  </main>
+
+  <footer class="footer"><p>© 2025 CineVault</p></footer>
+  <script type="module" src="../js/script.js"></script>
+</body>
+</html>

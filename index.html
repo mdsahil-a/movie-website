@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CineVault — Premium Movie Downloads</title>
+  <meta name="description"
+    content="Stream and download the latest movies in 4K, 1080p, and 720p. Premium cinematic experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="src/css/style.css" />
+</head>
+
+<body>
+  <div class="loader">
+    <div class="loader-spinner"></div>
+  </div>
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="index.html" class="logo">Cine<span>Vault</span></a>
+
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="#trending">Trending</a></li>
+      <li><a href="#new">New Releases</a></li>
+      <li><a href="#genres">Genres</a></li>
+      <li><a href="#mylist">My List</a></li>
+    </ul>
+
+    <div style="display:flex;align-items:center;gap:14px;">
+      <div class="search-box">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8" />
+          <path d="m21 21-4.3-4.3" />
+        </svg>
+        <input id="searchInput" type="text" placeholder="Search movies, genres..." />
+      </div>
+      <div class="hamburger"><span></span><span></span><span></span></div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <span class="hero-badge">Featured Tonight</span>
+      <h1 id="heroTitle">Stellar Horizon</h1>
+      <div class="hero-meta">
+        <span>★ 8.7</span>
+        <span>2024</span>
+        <span>4K Ultra HD</span>
+        <span>2h 22m</span>
+      </div>
+      <p id="heroDesc">A breathtaking journey beyond the edge of imagination.</p>
+      <div class="hero-actions">
+        <a id="heroWatch" href="src/pages/movie.html?id=1" class="btn btn-primary">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+            <path d="M8 5v14l11-7z" />
+          </svg>
+          <span>Watch Now</span>
+        </a>
+        <a href="src/pages/movie.html?id=1" class="btn btn-ghost">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10" />
+            <path d="M12 16v-4M12 8h.01" />
+          </svg>
+          More Info
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Movies grid -->
+  <section class="section" id="trending">
+    <div class="section-header">
+      <h2 class="section-title">Trending Now</h2>
+      <a href="#" class="section-link">View all →</a>
+    </div>
+    <div class="movie-grid" id="movieGrid"></div>
+  </section>
+
+  <footer class="footer">
+    <p>© 2025 CineVault — Premium movie experience. Demo project.</p>
+  </footer>
+
+  <script type="module" src="src/js/script.js"></script>
+</body>
+
+</html>

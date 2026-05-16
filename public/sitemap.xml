@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://cinevault.example.com/</loc>
+    <lastmod>2024-05-15</lastmod>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://cinevault.example.com/movie.html?id=1</loc>
+    <lastmod>2024-05-15</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cinevault.example.com/movie.html?id=2</loc>
+    <lastmod>2024-05-15</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://cinevault.example.com/movie.html?id=3</loc>
+    <lastmod>2024-05-15</lastmod>
+    <priority>0.8</priority>
+  </url>
+  <!-- Add more movies here as the database grows -->
+</urlset>
