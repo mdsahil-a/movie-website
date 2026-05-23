@@ -20,7 +20,10 @@ async function fetchInitialMovies() {
  * Real-time Database Search
  */
 export async function searchMovies(query) {
-  if (!query) return fetchInitialMovies();
+  if (!query) {
+    await loadMovies();
+    return MOVIES;
+  }
 
   const { data, error } = await supabase
     .from('movies')
@@ -76,4 +79,24 @@ export async function fetchMovieDetails(idOrSlug) {
   }
 }
 
-export const MOVIES = await fetchInitialMovies();
+export let MOVIES = [];
+
+let moviesLoadPromise = null;
+
+/** Load homepage movie list once (non-blocking module init). */
+export function loadMovies() {
+  if (!moviesLoadPromise) {
+    moviesLoadPromise = fetchInitialMovies()
+      .then((data) => {
+        MOVIES = data || [];
+        return MOVIES;
+      })
+      .catch((err) => {
+        console.error("Failed to load movies:", err);
+        MOVIES = [];
+        moviesLoadPromise = null;
+        return MOVIES;
+      });
+  }
+  return moviesLoadPromise;
+}

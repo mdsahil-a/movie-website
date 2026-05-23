@@ -8,6 +8,8 @@
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://oecnirospljntwridrtz.supabase.co" crossorigin>
+  <link rel="dns-prefetch" href="https://cdn.jsdelivr.net">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="../css/style.css" />
 </head>
@@ -16,20 +18,23 @@
 
   <nav class="navbar">
     <a href="../../index.html" class="logo">Movify<span>Hub</span></a>
-    <ul class="nav-links">
+    <ul class="nav-links" id="navLinks">
       <li><a href="../../index.html">Home</a></li>
       <li><a href="../../index.html#trending">Trending</a></li>
       <li><a href="../../index.html#new">New Releases</a></li>
       <li><a href="../../index.html#genres">Genres</a></li>
     </ul>
-    <div style="display:flex;align-items:center;gap:14px;">
+    <div class="navbar-actions">
       <div class="search-box">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
         <input id="searchInput" type="text" placeholder="Search..." />
       </div>
-      <div class="hamburger"><span></span><span></span><span></span></div>
+      <button type="button" class="hamburger" aria-label="Open navigation menu" aria-expanded="false" aria-controls="navLinks">
+        <span></span><span></span><span></span>
+      </button>
     </div>
   </nav>
+  <div class="nav-overlay" aria-hidden="true"></div>
 
   <main id="detailsRoot">
     <section class="details-hero">

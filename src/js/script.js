@@ -1,4 +1,4 @@
-import { MOVIES, searchMovies, fetchMovieDetails, fetchAllMovies } from "./movies.js";
+import { MOVIES, loadMovies, searchMovies, fetchMovieDetails, fetchAllMovies } from "./movies.js";
 
 /* --------- Helpers --------- */
 const debounce = (fn, delay) => {
@@ -56,14 +56,17 @@ function updateSEO(m) {
 }
 
 /* --------- Loader --------- */
+let loaderHidden = false;
 const hideLoader = () => {
+  if (loaderHidden) return;
   const loader = $('.loader');
-  if (loader) setTimeout(() => loader.classList.add('hidden'), 350);
+  if (!loader) return;
+  loaderHidden = true;
+  loader.classList.add('hidden');
 };
 
-window.addEventListener('load', hideLoader);
-// Safety: hide loader if it's still visible after 3 seconds
-setTimeout(hideLoader, 3000);
+// Fallback only if data fetch hangs
+setTimeout(hideLoader, 2000);
 
 /* --------- Sticky navbar shadow --------- */
 window.addEventListener('scroll', () => {
@@ -72,16 +75,55 @@ window.addEventListener('scroll', () => {
   nav.classList.toggle('scrolled', window.scrollY > 20);
 });
 
-/* --------- Mobile hamburger --------- */
+/* --------- Mobile side navigation --------- */
+const MOBILE_NAV_BREAKPOINT = 900;
+
+function setMobileNavOpen(open) {
+  const burger = $('.hamburger');
+  const links = $('.nav-links');
+  const overlay = $('.nav-overlay');
+  if (!burger || !links) return;
+
+  burger.classList.toggle('active', open);
+  links.classList.toggle('active', open);
+  overlay?.classList.toggle('active', open);
+  document.body.classList.toggle('menu-open', open);
+  burger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  burger.setAttribute('aria-label', open ? 'Close navigation menu' : 'Open navigation menu');
+  overlay?.setAttribute('aria-hidden', open ? 'false' : 'true');
+}
+
+function closeMobileNav() {
+  setMobileNavOpen(false);
+}
+
 document.addEventListener('click', (e) => {
   const burger = e.target.closest('.hamburger');
   if (burger) {
-    burger.classList.toggle('active');
-    $('.nav-links')?.classList.toggle('active');
-  } else if (!e.target.closest('.nav-links')) {
-    $('.hamburger')?.classList.remove('active');
-    $('.nav-links')?.classList.remove('active');
+    e.stopPropagation();
+    const isOpen = burger.classList.contains('active');
+    setMobileNavOpen(!isOpen);
+    return;
   }
+  if (e.target.closest('.nav-overlay')) {
+    closeMobileNav();
+    return;
+  }
+  if (!e.target.closest('.nav-links')) {
+    closeMobileNav();
+  }
+});
+
+$$('.nav-links a').forEach((link) => {
+  link.addEventListener('click', closeMobileNav);
+});
+
+window.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') closeMobileNav();
+});
+
+window.addEventListener('resize', () => {
+  if (window.innerWidth > MOBILE_NAV_BREAKPOINT) closeMobileNav();
 });
 
 /* --------- Render movie card --------- */
@@ -169,24 +211,32 @@ function bindSearch() {
 }
 
 /* --------- Page init --------- */
-const init = () => {
+async function bootstrap() {
   const pageType = getPageType();
-  
 
-  if (pageType === 'home') {
-    initHomePage();
-  } else if (pageType === 'movie') {
-    renderDetails();
-  } else if (pageType === 'download') {
-    renderDownload();
+  try {
+    if (pageType === 'home' || pageType === 'movie') {
+      await loadMovies();
+    }
+
+    if (pageType === 'home') {
+      initHomePage();
+    } else if (pageType === 'movie') {
+      renderDetails();
+    } else if (pageType === 'download') {
+      await renderDownload();
+    }
+  } catch (err) {
+    console.error("Page bootstrap failed:", err);
+  } finally {
+    hideLoader();
   }
-};
+}
 
-// Modules are deferred, but let's be safe
 if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', init);
+  document.addEventListener('DOMContentLoaded', bootstrap);
 } else {
-  init();
+  bootstrap();
 }
 
 function getPageType() {
@@ -278,22 +328,23 @@ async function appendAllMovies() {
 }
 
 /* --------- Details renderer --------- */
-async function renderDetails() {
+function renderDetails() {
   const id = getParam('id') || getParam('slug');
   if (!id) return;
 
-  // Show immediate partial UI if movie is in current list
-  let m = MOVIES.find(x => String(x.id) === String(id) || x.slug === id);
-  if (m) updateUI(m);
+  const cached = MOVIES.find(x => String(x.id) === String(id) || x.slug === id);
+  if (cached) updateUI(cached);
 
-  // Fetch full details from DB
-  const fullMovie = await fetchMovieDetails(id);
-  if (fullMovie) updateUI(fullMovie);
+  fetchMovieDetails(id).then((fullMovie) => {
+    if (fullMovie) updateUI(fullMovie);
+    else if (!cached && $('#dTitle')) {
+      $('#dTitle').textContent = 'Movie not found';
+    }
+  });
 }
 
 function updateUI(m) {
   if (!m) return;
-  console.log("Updating UI with movie:", m.title);
   updateSEO(m);
 
   if ($('.details-bg')) $('.details-bg').style.backgroundImage = `url('${m.banner || m.backdrop || ''}')`;
@@ -324,9 +375,6 @@ function updateUI(m) {
   if ($('#relatedGrid')) {
     $('#relatedGrid').innerHTML = related.map(movieCardHTML).join('');
   }
-  
-  // Ensure loader is hidden after UI update
-  hideLoader();
 }
 
 /* --------- Download renderer --------- */
