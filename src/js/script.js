@@ -8,7 +8,7 @@ const debounce = (fn, delay) => {
     timeout = setTimeout(() => fn(...args), delay);
   };
 };
-const movie_id=86;
+const movie_id=196;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => root.querySelectorAll(sel);
 const getParam = (k) => new URLSearchParams(location.search).get(k);
