@@ -36,6 +36,21 @@ export async function searchMovies(query) {
 }
 
 /**
+ * Fetch all movies (for "View all" behavior)
+ */
+export async function fetchAllMovies() {
+  const { data, error } = await supabase
+    .from('movies')
+    .select('id, title, slug, poster, banner, rating, year, quality, duration, description');
+
+  if (error) {
+    console.error("Error fetching all movies:", error);
+    return [];
+  }
+  return data || [];
+}
+
+/**
  * Fetch full movie details
  */
 export async function fetchMovieDetails(idOrSlug) {

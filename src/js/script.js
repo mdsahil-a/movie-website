@@ -1,4 +1,4 @@
-import { MOVIES, searchMovies, fetchMovieDetails } from "./movies.js";
+import { MOVIES, searchMovies, fetchMovieDetails, fetchAllMovies } from "./movies.js";
 
 /* --------- Helpers --------- */
 const debounce = (fn, delay) => {
@@ -8,6 +8,7 @@ const debounce = (fn, delay) => {
     timeout = setTimeout(() => fn(...args), delay);
   };
 };
+const movie_id=82;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => root.querySelectorAll(sel);
 const getParam = (k) => new URLSearchParams(location.search).get(k);
@@ -39,7 +40,7 @@ function findMovie(idOrSlug) {
  */
 function updateSEO(m) {
   if (!m) return;
-  const siteName = "CineVault";
+  const siteName = "MovifyHub";
   document.title = `${m.title || 'Movie'} (${m.year || ''}) — ${siteName}`;
 
   // Update Meta Description
@@ -170,7 +171,7 @@ function bindSearch() {
 /* --------- Page init --------- */
 const init = () => {
   const pageType = getPageType();
-  console.log("CineVault Init:", pageType, "| Movies:", MOVIES.length);
+  
 
   if (pageType === 'home') {
     initHomePage();
@@ -200,26 +201,80 @@ function initHomePage() {
   if (!grid) return;
 
   if (MOVIES.length > 0) {
-    grid.innerHTML = MOVIES.map(movieCardHTML).join('');
+    // render the homepage grid sorted by release year (newest first)
+    const sortedByYear = MOVIES.slice().sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+    grid.innerHTML = sortedByYear.map(movieCardHTML).join('');
+    // console.log(`Loaded ${MOVIES[1].id} movies into the homepage grid.`);
 
-    // Hero from a featured movie (first one)
-    const featured = MOVIES[1];
-    const heroBg = $('.hero-bg');
-    console.log(featured.banner)
+    let featured;
+    MOVIES.forEach(m => {
+      if (m.id == movie_id) {
+        featured = m;
+        return;
+      }
+    });
+    if (!featured) featured = MOVIES[0] || null;
 
-    if (heroBg && (featured.banner || featured.backdrop)) {
-      heroBg.style.backgroundImage = `url('${featured.banner || featured.backdrop}')`;
+  
    
+    const heroBg = $('.hero-bg');
+    
+
+    if (featured) {
+      if (heroBg && (featured.banner || featured.backdrop)) {
+        heroBg.style.backgroundImage = `url('${featured.banner || featured.backdrop}')`;
+      }
+      if ($('#heroTitle')) $('#heroTitle').textContent = featured.title;
+      if ($('#heroDesc')) $('#heroDesc').textContent = featured.description;
+      $('#heroWatch')?.setAttribute('href', `${PATHS.movie}?id=${featured.id}`);
     }
-    if ($('#heroTitle')) $('#heroTitle').textContent = featured.title;
-    if ($('#heroDesc')) $('#heroDesc').textContent = featured.description;
-    $('#heroWatch')?.setAttribute('href', `${PATHS.movie}?id=${featured.id}`);
   } else {
     grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:100px;color:#777;">No movies found. Check your database.</p>`;
   }
 
   bindSearch();
-  document.title = "CineVault — Premium Movie Downloads";
+  document.title = "MovifyHub — Premium Movie Downloads";
+
+  // Wire "View all" link to append all movies
+  const viewAllLink = document.querySelector('#trending .section-link');
+  if (viewAllLink) {
+    viewAllLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      appendAllMovies();
+    });
+  }
+}
+
+async function appendAllMovies() {
+  const grid = $('#movieGrid');
+  const viewAllLink = document.querySelector('#trending .section-link');
+  if (!grid) return;
+
+  if (viewAllLink) {
+    viewAllLink.classList.add('loading');
+    viewAllLink.textContent = 'Loading all movies...';
+  }
+
+  const all = await fetchAllMovies();
+  const existingIds = new Set(Array.from(grid.querySelectorAll('.movie-card')).map(card => {
+    const url = card.getAttribute('href') || '';
+    const match = url.match(/id=(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  }).filter(Boolean));
+
+  const missing = all.filter(m => !existingIds.has(m.id));
+  // sort missing by year desc before appending
+  missing.sort((a, b) => (Number(b.year) || 0) - (Number(a.year) || 0));
+
+  if (missing.length) {
+    grid.insertAdjacentHTML('beforeend', missing.map(movieCardHTML).join(''));
+  }
+
+  if (viewAllLink) {
+    viewAllLink.classList.remove('loading');
+    viewAllLink.textContent = missing.length ? 'Showing all movies' : 'All movies already loaded';
+    viewAllLink.disabled = true;
+  }
 }
 
 /* --------- Details renderer --------- */
