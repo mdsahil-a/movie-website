@@ -1,4 +1,7 @@
 import { supabase } from "../lib/db.js";
+import { rankMovies } from "./search-utils.js";
+
+const SEARCH_SELECT = 'id, title, slug, poster, rating, year, quality, duration';
 
 /**
  * Fetch initial movies (Top 20 for homepage)
@@ -16,26 +19,65 @@ async function fetchInitialMovies() {
   return data;
 }
 
+let searchCatalog = null;
+let searchCatalogPromise = null;
+
+/** Load full catalog once for fuzzy client-side search. */
+async function getSearchCatalog() {
+  if (searchCatalog) return searchCatalog;
+  if (!searchCatalogPromise) {
+    searchCatalogPromise = supabase
+      .from('movies')
+      .select(SEARCH_SELECT)
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("Search catalog error:", error);
+          searchCatalog = [];
+        } else {
+          searchCatalog = data || [];
+        }
+        return searchCatalog;
+      })
+      .catch((err) => {
+        console.error("Search catalog failed:", err);
+        searchCatalog = [];
+        searchCatalogPromise = null;
+        return searchCatalog;
+      });
+  }
+  return searchCatalogPromise;
+}
+
+export function preloadSearchCatalog() {
+  return getSearchCatalog();
+}
+
 /**
- * Real-time Database Search
+ * Flexible search — matches partial words in any order.
+ * "love and thunder", "thor love", "thunder" all find "Thor: Love and Thunder".
  */
+async function getMoviesForSearch() {
+  const catalog = await getSearchCatalog();
+  return catalog.length ? catalog : MOVIES;
+}
+
 export async function searchMovies(query) {
-  if (!query) {
+  if (!query?.trim()) {
     await loadMovies();
     return MOVIES;
   }
 
-  const { data, error } = await supabase
-    .from('movies')
-    .select('id, title, slug, poster, rating, year, quality, duration')
-    .ilike('title', `%${query}%`)
-    .limit(20);
+  const pool = await getMoviesForSearch();
+  return rankMovies(pool, query, 24);
+}
 
-  if (error) {
-    console.error("Search error:", error);
-    return [];
-  }
-  return data;
+/** Top matches for the search suggestions dropdown. */
+export async function getSearchSuggestions(query, limit = 8) {
+  const trimmed = query?.trim();
+  if (!trimmed || trimmed.length < 1) return [];
+
+  const pool = await getMoviesForSearch();
+  return rankMovies(pool, trimmed, limit);
 }
 
 /**

@@ -1,4 +1,4 @@
-import { MOVIES, loadMovies, searchMovies, fetchMovieDetails, fetchAllMovies } from "./movies.js";
+import { MOVIES, loadMovies, searchMovies, getSearchSuggestions, preloadSearchCatalog, fetchMovieDetails, fetchAllMovies } from "./movies.js";
 
 /* --------- Helpers --------- */
 const debounce = (fn, delay) => {
@@ -12,6 +12,13 @@ const movie_id=82;
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => root.querySelectorAll(sel);
 const getParam = (k) => new URLSearchParams(location.search).get(k);
+
+const escapeHtml = (str) =>
+  String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 
 /* --------- Path Management --------- */
 // Detect if we are in the pages folder or root
@@ -152,7 +159,27 @@ function movieCardHTML(m) {
     </a>`;
 }
 
-/* --------- Search filtering --------- */
+/* --------- Search + suggestions --------- */
+function setupSearchWrap(input) {
+  const searchBox = input.closest('.search-box');
+  if (!searchBox || searchBox.parentElement?.classList.contains('search-wrap')) {
+    return searchBox?.parentElement;
+  }
+  const wrap = document.createElement('div');
+  wrap.className = 'search-wrap';
+  searchBox.parentNode.insertBefore(wrap, searchBox);
+  wrap.appendChild(searchBox);
+
+  const list = document.createElement('div');
+  list.id = 'searchSuggestions';
+  list.className = 'search-suggestions';
+  list.setAttribute('role', 'listbox');
+  list.setAttribute('aria-label', 'Movie suggestions');
+  list.hidden = true;
+  wrap.appendChild(list);
+  return wrap;
+}
+
 function bindSearch() {
   const input = $('#searchInput');
   const grid = $('#movieGrid');
@@ -162,47 +189,165 @@ function bindSearch() {
 
   if (!input) return;
 
+  preloadSearchCatalog();
+
+  const wrap = setupSearchWrap(input);
+  const suggestionsEl = $('#searchSuggestions');
+  let activeIndex = -1;
+  let currentSuggestions = [];
+  let suggestionsRequest = 0;
+
+  const closeSuggestions = () => {
+    activeIndex = -1;
+    currentSuggestions = [];
+    if (!suggestionsEl) return;
+    suggestionsEl.hidden = true;
+    suggestionsEl.classList.remove('open');
+    suggestionsEl.innerHTML = '';
+    input.setAttribute('aria-expanded', 'false');
+  };
+
+  const renderSuggestions = (movies) => {
+    if (!suggestionsEl) return;
+    currentSuggestions = movies;
+    activeIndex = -1;
+
+    if (!movies.length) {
+      closeSuggestions();
+      return;
+    }
+
+    suggestionsEl.innerHTML = movies
+      .map(
+        (m, i) => `
+        <a href="${PATHS.movie}?id=${m.id}" class="search-suggestion-item" role="option" data-index="${i}" tabindex="-1">
+          <img class="suggestion-poster" src="${escapeHtml(m.poster || '')}" alt="" loading="lazy" width="40" height="60" />
+          <span class="suggestion-text">
+            <span class="suggestion-title">${escapeHtml(m.title)}</span>
+            <span class="suggestion-meta">${escapeHtml(m.year || '')}${m.rating ? ` · ★ ${escapeHtml(m.rating)}` : ''}</span>
+          </span>
+        </a>`
+      )
+      .join('');
+
+    suggestionsEl.hidden = false;
+    suggestionsEl.classList.add('open');
+    input.setAttribute('aria-expanded', 'true');
+
+    $$('.search-suggestion-item', suggestionsEl).forEach((el) => {
+      el.addEventListener('mousedown', (e) => e.preventDefault());
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.location.href = el.getAttribute('href');
+      });
+    });
+  };
+
+  const setActiveSuggestion = (index) => {
+    const items = $$('.search-suggestion-item', suggestionsEl);
+    if (!items.length) return;
+    activeIndex = Math.max(-1, Math.min(index, items.length - 1));
+    items.forEach((el, i) => el.classList.toggle('active', i === activeIndex));
+    if (activeIndex >= 0) {
+      items[activeIndex].scrollIntoView({ block: 'nearest' });
+    }
+  };
+
+  const updateSuggestions = async (raw) => {
+    const q = raw.trim();
+    if (q.length < 1) {
+      closeSuggestions();
+      return;
+    }
+
+    const reqId = ++suggestionsRequest;
+    const list = await getSearchSuggestions(q, 8);
+    if (reqId !== suggestionsRequest) return;
+    renderSuggestions(list);
+  };
+
   const performSearch = async (q) => {
     const rawQ = q;
     q = q.trim();
+    closeSuggestions();
 
-    // Toggle hero visibility
     if (hero) hero.style.display = q ? 'none' : '';
     if (sectionTitle) sectionTitle.textContent = q ? `Searching for "${rawQ}"...` : 'Trending Now';
     if (sectionLink) sectionLink.style.display = q ? 'none' : '';
 
-    // Show loading state in grid
     if (grid) grid.style.opacity = '0.5';
 
-    // Database Search
     const list = await searchMovies(q);
-    
+
     if (grid) {
       grid.style.opacity = '1';
       if (sectionTitle) sectionTitle.textContent = q ? `Results for "${rawQ}"` : 'Trending Now';
-      
+
       grid.innerHTML = list.length
         ? list.map(movieCardHTML).join('')
-        : `<p style="grid-column:1/-1;text-align:center;color:#777;padding:40px;">No movies match "${rawQ}"</p>`;
+        : `<p style="grid-column:1/-1;text-align:center;color:#777;padding:40px;">No movies match "${escapeHtml(rawQ)}"</p>`;
     }
   };
 
   const debouncedSearch = debounce((val) => performSearch(val), 400);
+  const debouncedSuggestions = debounce((val) => updateSuggestions(val), 120);
 
-  input.addEventListener('input', (e) => debouncedSearch(e.target.value));
+  input.setAttribute('autocomplete', 'off');
+  input.setAttribute('aria-autocomplete', 'list');
+  input.setAttribute('aria-expanded', 'false');
+  if (suggestionsEl) input.setAttribute('aria-controls', 'searchSuggestions');
 
-  // If no grid, enter key redirects to homepage with query
-  if (!grid) {
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        const q = input.value.trim();
-        if (q) window.location.href = `${PATHS.home}?q=${encodeURIComponent(q)}`;
+  input.addEventListener('input', (e) => {
+    const val = e.target.value;
+    debouncedSuggestions(val);
+    if (grid) debouncedSearch(val);
+    else if (!val.trim()) closeSuggestions();
+  });
+
+  input.addEventListener('focus', () => {
+    if (input.value.trim().length >= 1) updateSuggestions(input.value);
+  });
+
+  input.addEventListener('keydown', (e) => {
+    const items = $$('.search-suggestion-item', suggestionsEl);
+    const open = suggestionsEl && !suggestionsEl.hidden && items.length;
+
+    if (e.key === 'ArrowDown' && open) {
+      e.preventDefault();
+      setActiveSuggestion(activeIndex + 1);
+      return;
+    }
+    if (e.key === 'ArrowUp' && open) {
+      e.preventDefault();
+      setActiveSuggestion(activeIndex - 1);
+      return;
+    }
+    if (e.key === 'Escape') {
+      closeSuggestions();
+      return;
+    }
+    if (e.key === 'Enter') {
+      if (open && activeIndex >= 0 && currentSuggestions[activeIndex]) {
+        e.preventDefault();
+        window.location.href = `${PATHS.movie}?id=${currentSuggestions[activeIndex].id}`;
+        return;
       }
-    });
+      const q = input.value.trim();
+      if (!grid && q) {
+        e.preventDefault();
+        window.location.href = `${PATHS.home}?q=${encodeURIComponent(q)}`;
+      }
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (!wrap?.contains(e.target)) closeSuggestions();
+  });
+
+  if (!grid) {
     return;
   }
 
-  // Check for initial query param (from other pages)
   const initialQ = getParam('q');
   if (initialQ) {
     input.value = initialQ;
@@ -231,6 +376,8 @@ async function bootstrap() {
   } finally {
     hideLoader();
   }
+
+  bindSearch();
 }
 
 if (document.readyState === 'loading') {
@@ -282,7 +429,6 @@ function initHomePage() {
     grid.innerHTML = `<p style="grid-column:1/-1;text-align:center;padding:100px;color:#777;">No movies found. Check your database.</p>`;
   }
 
-  bindSearch();
   document.title = "MovifyHub — Premium Movie Downloads";
 
   // Wire "View all" link to append all movies
