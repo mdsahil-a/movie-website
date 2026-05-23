@@ -6,7 +6,7 @@ import { supabase } from "../lib/db.js";
 async function fetchInitialMovies() {
   const { data, error } = await supabase
     .from('movies')
-    .select('id, title, slug, poster, rating, year, quality, duration, description')
+    .select('id, title, slug, poster, banner, rating, year, quality, duration, description')
     .limit(20);
 
   if (error) {

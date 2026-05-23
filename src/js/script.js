@@ -13,7 +13,10 @@ const $$ = (sel, root = document) => root.querySelectorAll(sel);
 const getParam = (k) => new URLSearchParams(location.search).get(k);
 
 /* --------- Path Management --------- */
-const isInsidePages = window.location.pathname.includes('/src/pages/');
+// Detect if we are in the pages folder or root
+const isInsidePages = window.location.pathname.includes('/pages/') || 
+                      window.location.pathname.includes('/src/pages/');
+
 const PATHS = {
   home: isInsidePages ? '../../index.html' : 'index.html',
   movie: isInsidePages ? 'movie.html' : 'src/pages/movie.html',
@@ -200,10 +203,13 @@ function initHomePage() {
     grid.innerHTML = MOVIES.map(movieCardHTML).join('');
 
     // Hero from a featured movie (first one)
-    const featured = MOVIES[0];
+    const featured = MOVIES[1];
     const heroBg = $('.hero-bg');
+    console.log(featured.banner)
+
     if (heroBg && (featured.banner || featured.backdrop)) {
       heroBg.style.backgroundImage = `url('${featured.banner || featured.backdrop}')`;
+   
     }
     if ($('#heroTitle')) $('#heroTitle').textContent = featured.title;
     if ($('#heroDesc')) $('#heroDesc').textContent = featured.description;
