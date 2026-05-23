@@ -1,13 +1,21 @@
 import { defineConfig } from 'vite';
+import { resolve } from 'path';
 
 export default defineConfig({
-  base: './', // Ensures relative paths for assets on GitHub Pages
+  base: './',
   build: {
     outDir: 'dist',
     assetsDir: 'assets',
+    rollupOptions: {
+      input: {
+        main: resolve(__dirname, 'index.html'),
+        movie: resolve(__dirname, 'movie.html'),
+        download: resolve(__dirname, 'download.html'),
+      },
+    },
   },
   server: {
     port: 3000,
-    open: true
-  }
+    open: true,
+  },
 });

@@ -20,15 +20,11 @@ const escapeHtml = (str) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-/* --------- Path Management --------- */
-// Detect if we are in the pages folder or root
-const isInsidePages = window.location.pathname.includes('/pages/') || 
-                      window.location.pathname.includes('/src/pages/');
-
+/* --------- Path Management (root HTML entry points for Vercel/Vite) --------- */
 const PATHS = {
-  home: isInsidePages ? '../../index.html' : 'index.html',
-  movie: isInsidePages ? 'movie.html' : 'src/pages/movie.html',
-  download: isInsidePages ? 'download.html' : 'src/pages/download.html'
+  home: 'index.html',
+  movie: 'movie.html',
+  download: 'download.html',
 };
 
 /**
